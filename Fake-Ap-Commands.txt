@@ -1,0 +1,28 @@
+#install dnsmasq (only do this once)
+apt-get install dnsmasq
+
+#edit dhcp configuration
+echo -e "interface=at0\ndhcp-range=192.168.0.50,192.168.0.150,12h" > /etc/dnsmasq.conf
+
+#start fake ap
+airbase-ng -e [network name] -c [channel] [interface]
+#ex: airbase-ng -e fake-ap -c 6 mon0
+
+ifconfig at0 192.168.0.1 up
+#removing iptables rules
+iptables --flush
+iptables --table nat --flush
+iptables --delete-chain
+iptables --table nat --delete-chain
+
+#enable packet forward in iptables
+iptables -P FORWARD ACCEPT
+
+#link the wifi card and the card thats connected to the internet
+iptables -t nat -A POSTROUTING -o [internet interface] -j MASQUERADE
+
+#start dnsmasq
+dnsmasq
+
+#enable ip forward
+echo "1" > /proc/sys/net/ipv4/ip_forward
